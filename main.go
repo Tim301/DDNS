@@ -17,6 +17,8 @@ func redirect(w http.ResponseWriter, r *http.Request) {
 	location := vars["location"]
 	key := vars["key"]
 	redirection := getDDNS(SqliteDatabase, location, key)
+	w.Header().Set("pragma", "no-cache")
+	w.Header().Set("cache-control", "no-cache")
 
 	if redirection != "Not found" {
 		http.Redirect(w, r, redirection, 301)
@@ -40,10 +42,6 @@ func updateIP(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Updated")
 }
 
-func hello(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Hello")
-}
-
 func getIP(r *http.Request) string {
 	if r.RemoteAddr != "" {
 		end := strings.Index(r.RemoteAddr, ":")
@@ -58,7 +56,6 @@ func main() {
 
 	//fmt.Println(getDDNS(SqliteDatabase, "Studiotech", "96a3f2da"))
 	r := mux.NewRouter()
-	r.HandleFunc("/", hello)
 	r.HandleFunc("/access/{location}/{key}", redirect)
 	r.HandleFunc("/update/{location}/{key}", updateIP)
 
