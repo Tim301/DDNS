@@ -15,7 +15,7 @@ func redirect(w http.ResponseWriter, r *http.Request) {
 	start := time.Now()
 	vars := mux.Vars(r)
 	location := vars["location"]
-	key := vars["key"]
+	key := vars["accesskey"]
 	redirection := getDDNS(SqliteDatabase, location, key)
 	w.Header().Set("pragma", "no-cache")
 	w.Header().Set("cache-control", "no-cache")
@@ -35,7 +35,7 @@ func redirect(w http.ResponseWriter, r *http.Request) {
 func updateIP(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	location := vars["location"]
-	key := vars["key"]
+	key := vars["updatekey"]
 	updatedIP := "http://" + getIP(r)
 	fmt.Println(updatedIP)
 	setDDNS(SqliteDatabase, location, key, updatedIP)
@@ -54,10 +54,9 @@ func main() {
 	SqliteDatabase, _ = sql.Open("sqlite3", "./sqlite-database.db") // Open the created SQLite File
 	defer SqliteDatabase.Close()                                    // Defer Closing the database
 
-	//fmt.Println(getDDNS(SqliteDatabase, "Studiotech", "96a3f2da"))
 	r := mux.NewRouter()
-	r.HandleFunc("/access/{location}/{key}", redirect)
-	r.HandleFunc("/update/{location}/{key}", updateIP)
+	r.HandleFunc("/access/{location}/{accesskey}", redirect)
+	r.HandleFunc("/update/{location}/{updatekey}", updateIP)
 
 	err := http.ListenAndServe(":80", r)
 	if err != nil {

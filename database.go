@@ -22,10 +22,10 @@ func init() {
 		}
 		file.Close()
 		log.Println("sqlite-database.db created")
-		sqliteDatabaseInit, _ := sql.Open("sqlite3", "./sqlite-database.db") // Open the created SQLite File
-		createTable(sqliteDatabaseInit)                                      // Create Database Tables
-		sqliteDatabaseInit.Close()                                           // Closing the database
-
+		sqliteDatabaseInit, _ := sql.Open("sqlite3", "./sqlite-database.db")                                // Open the created SQLite File
+		createTable(sqliteDatabaseInit)                                                                     // Create Database Tables
+		insertDDNS(sqliteDatabaseInit, "example", "96a3f2da", "351c5ze2", "https://github.com/Tim301/DDNS") // Example
+		sqliteDatabaseInit.Close()                                                                          // Closing the database
 	}
 }
 
@@ -33,8 +33,9 @@ func createTable(db *sql.DB) {
 	createStudentTableSQL := `CREATE TABLE DDNS (
 		"id" integer NOT NULL PRIMARY KEY AUTOINCREMENT,		
 		"location" TEXT,
-		"uniquekey" TEXT,
-		"ip" TEXT		
+		"accesskey" TEXT,
+		"updatekey" TEXT,
+		"ip" TEXT
 	  );` // SQL Statement for Create Table
 
 	log.Println("Create DDNS table...")
@@ -47,15 +48,14 @@ func createTable(db *sql.DB) {
 }
 
 // We are passing db reference connection from main to our method with other parameters
-func insertDDNS(db *sql.DB, location string, uniquekey string, ip string) {
+func insertDDNS(db *sql.DB, location string, accesskey string, updatekey string, ip string) {
 	log.Println("Inserting DDNS record ...")
-	insertDDNSSQL := `INSERT INTO DDNS(location, uniquekey, ip) VALUES (?, ?, ?)`
+	insertDDNSSQL := `INSERT INTO DDNS(location, accesskey, updatekey, ip) VALUES (?, ?, ?, ?)`
 	statement, err := db.Prepare(insertDDNSSQL) // Prepare statement.
-	// This is good to avoid SQL injections
 	if err != nil {
 		log.Fatalln(err.Error())
 	}
-	_, err = statement.Exec(location, uniquekey, ip)
+	_, err = statement.Exec(location, accesskey, updatekey, ip)
 	if err != nil {
 		log.Fatalln(err.Error())
 	}
@@ -70,12 +70,13 @@ func getDDNS(db *sql.DB, target string, key string) (redirection string) {
 	for row.Next() { // Iterate and fetch the records from result cursor
 		var id int
 		var location string
-		var uniquekey string
+		var accesskey string
+		var updatekey string
 		var ip string
 		redirection = "Not found"
-		row.Scan(&id, &location, &uniquekey, &ip)
-		log.Println("DDNS: ", location, " ", uniquekey, " ", ip)
-		if target == location && key == uniquekey {
+		row.Scan(&id, &location, &accesskey, &updatekey, &ip)
+		log.Println("DDNS: ", location, " ", accesskey, " ", ip)
+		if target == location && key == accesskey {
 			redirection = ip
 			break
 		}
